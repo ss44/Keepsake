@@ -8,8 +8,8 @@ import MediaGrid from './MediaGrid.vue'
 import loadingLottieUrl from '../loading.lottie?url'
 
 const store = useAppStore()
-const startDate = ref('')
-const endDate = ref('')
+const startDate = ref('2021-02-04')
+const endDate = ref(new Date().toISOString().split('T')[0])
 
 let previewTimer = null
 watch(
