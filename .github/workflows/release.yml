@@ -6,6 +6,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     strategy:
       matrix:
         build:
@@ -32,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Adjust version as needed
+          node-version: '24' # Adjust version as needed
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
