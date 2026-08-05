@@ -1,11 +1,11 @@
 # Keepsake
 
 <p align="center">
-  <img src="keepsake.svg" alt="Keepsake Logo" width="128" height="128" />
+  <img src="keepsake.svg" alt="Keepsake Logo" width="300" height="300" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/shinda/Keepsake/releases/latest">Download Latest Release</a> | <a href="#features">Features</a> | <a href="#development">Development</a> | <a href="#building-the-app">Building</a>
+  Download: <a href="https://github.com/shinda/Keepsake/releases/latest/download/keepsake-windows-amd64.exe">🪟 Windows</a> | <a href="https://github.com/shinda/Keepsake/releases/latest/download/keepsake-darwin-universal.dmg">🍎 macOS</a> | <a href="https://github.com/shinda/Keepsake/releases/latest/download/keepsake-linux-amd64.tar.gz">🐧 Linux</a>
 </p>
 
 Keepsake is a friendly, cross-platform desktop app (built with Go, Wails v2, and Vue 3) designed to help parents easily download their children's photos and videos from Brightwheel. It takes care of the tedious parts by automatically handling deduplication, normalizing filenames, and even restoring original EXIF metadata and filesystem timestamps.
