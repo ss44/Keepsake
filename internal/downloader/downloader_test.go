@@ -76,13 +76,13 @@ func newMock(t *testing.T) (*mockAPI, string) {
 			Note:      "first",
 			EventDate: "2024-03-01T10:00:00.000Z",
 			Target:    brightwheel.Target{FirstName: "Jane", LastName: "Doe"},
-			Media:     []brightwheel.Media{{ImageURL: srv.URL + "/a.jpg"}},
+			Media:     []brightwheel.Media{{ObjectID: "1111222233334444", ImageURL: srv.URL + "/a.jpg"}},
 		},
 		{
 			Note:      "video",
 			EventDate: "2024-03-02T10:00:00.000Z",
 			Target:    brightwheel.Target{FirstName: "Jane", LastName: "Doe"},
-			VideoInfo: &brightwheel.VideoInfo{DownloadableURL: srv.URL + "/v.mp4"},
+			VideoInfo: &brightwheel.VideoInfo{ObjectID: "5555666677778888", DownloadableURL: srv.URL + "/v.mp4"},
 		},
 	}}
 	return m, payload
@@ -99,8 +99,8 @@ func TestDownloadNamingAndContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	img := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_0.jpg")
-	vid := filepath.Join(dir, "jane_doe-2024-03-02_10-00-00_100.mp4")
+	img := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_4444.jpg")
+	vid := filepath.Join(dir, "jane_doe-2024-03-02_10-00-00_8888.mp4")
 	for _, p := range []string{img, vid} {
 		data, err := os.ReadFile(p)
 		if err != nil {
@@ -120,7 +120,7 @@ func TestDedupSkipsMatchingSize(t *testing.T) {
 	dir := t.TempDir()
 
 	// Pre-create the target file with identical size.
-	existing := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_0.jpg")
+	existing := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_4444.jpg")
 	if err := os.WriteFile(existing, []byte(payload), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +137,7 @@ func TestDedupSkipsMatchingSize(t *testing.T) {
 		t.Fatalf("expected first file to be skipped: %+v", ev.files)
 	}
 	// No collision files should exist.
-	if _, err := os.Stat(filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_1.jpg")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_4444-1.jpg")); !os.IsNotExist(err) {
 		t.Fatal("unexpected collision file created")
 	}
 }
@@ -147,8 +147,9 @@ func TestCollisionIncrementsIndex(t *testing.T) {
 	dir := t.TempDir()
 
 	// Occupy slot 0 with different content (size mismatch).
-	existing := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_0.jpg")
-	if err := os.WriteFile(existing, []byte("different-size-content"), 0644); err != nil {
+	existing := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_4444.jpg")
+	differentContent := make([]byte, 200000) // 200KB difference
+	if err := os.WriteFile(existing, differentContent, 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -159,7 +160,7 @@ func TestCollisionIncrementsIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	collided := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_1.jpg")
+	collided := filepath.Join(dir, "jane_doe-2024-03-01_10-00-00_4444-1.jpg")
 	data, err := os.ReadFile(collided)
 	if err != nil {
 		t.Fatalf("expected collision file: %v", err)
@@ -169,13 +170,15 @@ func TestCollisionIncrementsIndex(t *testing.T) {
 	}
 	// Original untouched.
 	orig, _ := os.ReadFile(existing)
-	if string(orig) != "different-size-content" {
+	if len(orig) != 200000 {
 		t.Fatal("original file was overwritten")
 	}
 }
 
 func TestLegacyMigration(t *testing.T) {
 	m, payload := newMock(t)
+	// Override to empty UUID so it uses array index 0
+	m.activities[0].Media[0].ObjectID = ""
 	dir := t.TempDir()
 
 	// Legacy unindexed file with matching size.

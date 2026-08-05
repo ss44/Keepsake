@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import StudentList from './StudentList.vue'
 import ProgressBar from './ProgressBar.vue'
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 import MediaGrid from './MediaGrid.vue'
 import loadingLottieUrl from '../loading.lottie?url'
 
@@ -74,7 +75,7 @@ function start() {
       <main class="flex-1 min-w-0 overflow-y-auto p-3 relative">
         <MediaGrid />
         <div v-if="store.downloading" class="absolute inset-0 bg-white/20 z-10 flex items-center justify-center pointer-events-none">
-          <dotlottie-player :src="loadingLottieUrl" background="transparent" speed="1" style="width: 250px; height: 250px;" loop="true" autoplay="true"></dotlottie-player>
+          <DotLottieVue :src="loadingLottieUrl" background="transparent" :speed="1" style="width: 250px; height: 250px;" loop autoplay />
         </div>
       </main>
     </div>

@@ -252,11 +252,11 @@ func (a *App) PreviewMedia(studentIDs []string, startDate, endDate string) ([]Re
 		limitPerStudent = 1
 	}
 
-	add := func(rawURL, thumbURL, studentID, studentName, dateStr string, index int) {
+	add := func(rawURL, thumbURL, studentID, studentName, dateStr string, index int, uuid string) {
 		if rawURL == "" || len(items) >= maxItems {
 			return
 		}
-		name := downloader.ExpectedFilename(studentName, dateStr, index, rawURL)
+		name := downloader.ExpectedFilename(studentName, dateStr, index, rawURL, uuid)
 		if name == "" {
 			return
 		}
@@ -300,11 +300,11 @@ func (a *App) PreviewMedia(studentIDs []string, startDate, endDate string) ([]Re
 			}
 			for idx, m := range act.Media {
 				if m.ImageURL != "" && studentItemsCount < limitPerStudent {
-					add(m.ImageURL, m.ThumbnailURL, id, studentName, act.Date(), idx)
+					add(m.ImageURL, m.ThumbnailURL, id, studentName, act.Date(), idx, m.ObjectID)
 					studentItemsCount++
 				}
 				if m.VideoURL != "" && studentItemsCount < limitPerStudent {
-					add(m.VideoURL, "", id, studentName, act.Date(), idx)
+					add(m.VideoURL, "", id, studentName, act.Date(), idx, m.ObjectID)
 					studentItemsCount++
 				}
 			}
@@ -315,7 +315,7 @@ func (a *App) PreviewMedia(studentIDs []string, startDate, endDate string) ([]Re
 					u = v.StreamableURL
 				}
 				if u != "" {
-					add(u, "", id, studentName, act.Date(), 100)
+					add(u, "", id, studentName, act.Date(), 100, v.ObjectID)
 					studentItemsCount++
 				}
 			}

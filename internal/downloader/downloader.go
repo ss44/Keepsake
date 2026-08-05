@@ -170,18 +170,18 @@ func (e *Engine) processActivity(a brightwheel.Activity, folder string) {
 
 	for idx, m := range a.Media {
 		if m.ImageURL != "" {
-			e.downloadFile(m.ImageURL, folder, studentName, dateStr, idx, note)
+			e.downloadFile(m.ImageURL, folder, studentName, dateStr, idx, note, m.ObjectID)
 		}
 		if m.VideoURL != "" {
-			e.downloadFile(m.VideoURL, folder, studentName, dateStr, idx, note)
+			e.downloadFile(m.VideoURL, folder, studentName, dateStr, idx, note, m.ObjectID)
 		}
 	}
 
 	if a.VideoInfo != nil {
 		if a.VideoInfo.DownloadableURL != "" {
-			e.downloadFile(a.VideoInfo.DownloadableURL, folder, studentName, dateStr, 100, note)
+			e.downloadFile(a.VideoInfo.DownloadableURL, folder, studentName, dateStr, 100, note, a.VideoInfo.ObjectID)
 		} else if a.VideoInfo.StreamableURL != "" {
-			e.downloadFile(a.VideoInfo.StreamableURL, folder, studentName, dateStr, 100, note)
+			e.downloadFile(a.VideoInfo.StreamableURL, folder, studentName, dateStr, 100, note, a.VideoInfo.ObjectID)
 		}
 	}
 }
@@ -211,19 +211,23 @@ func formattedDate(dateStr string) string {
 // ExpectedFilename computes the base filename a media item will be saved
 // as (before collision increments), so the UI can preview pending items
 // and match them to completed downloads.
-func ExpectedFilename(studentName, dateStr string, index int, rawURL string) string {
+func ExpectedFilename(studentName, dateStr string, index int, rawURL, uuid string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return ""
 	}
-	return fmt.Sprintf("%s-%s_%d%s",
-		safeName(studentName), formattedDate(dateStr), index, path.Ext(u.Path))
+	suffix := fmt.Sprint(index)
+	if len(uuid) >= 4 {
+		suffix = uuid[len(uuid)-4:]
+	}
+	return fmt.Sprintf("%s-%s_%s%s",
+		safeName(studentName), formattedDate(dateStr), suffix, path.Ext(u.Path))
 }
 
 // downloadFile implements the dedup/collision logic ported from the Ruby
 // script: find a free slot by comparing remote content-length with local
 // size; on size match update metadata only.
-func (e *Engine) downloadFile(rawURL, folder, studentName, dateStr string, index int, description string) {
+func (e *Engine) downloadFile(rawURL, folder, studentName, dateStr string, index int, description string, uuid string) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		log.Errorf("bad url %s: %v", rawURL, err)
@@ -240,16 +244,25 @@ func (e *Engine) downloadFile(rawURL, folder, studentName, dateStr string, index
 	defer e.emitProgress(false)
 	isVideo := library.VideoExts[strings.ToLower(ext)]
 
-	currentIdx := index
+	suffix := fmt.Sprint(index)
+	if len(uuid) >= 4 {
+		suffix = uuid[len(uuid)-4:]
+	}
+
+	currentSuffix := suffix
+	increment := 0
 	var target string
 	for {
-		filename := fmt.Sprintf("%s-%s_%d%s", name, date, currentIdx, ext)
+		filename := fmt.Sprintf("%s-%s_%s%s", name, date, currentSuffix, ext)
+		if increment > 0 {
+			filename = fmt.Sprintf("%s-%s_%s-%d%s", name, date, suffix, increment, ext)
+		}
 		candidate := filepath.Join(folder, filename)
 
 		if _, err := os.Stat(candidate); os.IsNotExist(err) {
-			// Legacy migration: if slot 0, rename an unindexed legacy file,
+			// Legacy migration: if using array fallback idx 0, rename an unindexed legacy file,
 			// then re-check it like any existing file (size compare below).
-			if currentIdx == 0 {
+			if increment == 0 && currentSuffix == "0" {
 				legacy := filepath.Join(folder, fmt.Sprintf("%s-%s%s", name, date, ext))
 				if _, err := os.Stat(legacy); err == nil {
 					if rerr := os.Rename(legacy, candidate); rerr == nil {
@@ -264,14 +277,26 @@ func (e *Engine) downloadFile(rawURL, folder, studentName, dateStr string, index
 
 		remoteSize, ok := e.api.RemoteSize(rawURL)
 		if ok {
-			if fi, err := os.Stat(candidate); err == nil && fi.Size() == remoteSize {
-				log.Debugf("%s matches remote size, skipping download", filename)
-				_ = e.meta.Update(candidate, description, dateStr)
-				e.events.OnFile(FileEvent{Path: candidate, Filename: filename, Skipped: true, IsVideo: isVideo})
-				return
+			if fi, err := os.Stat(candidate); err == nil {
+				sizeMatch := fi.Size() == remoteSize
+				if !sizeMatch && !isVideo {
+					// EXIF metadata written by Keepsake slightly increases JPEG file size.
+					// We tolerate an increase of up to 32KB to recognize the same image.
+					diff := fi.Size() - remoteSize
+					if diff > 0 && diff <= 32768 {
+						sizeMatch = true
+					}
+				}
+
+				if sizeMatch {
+					log.Debugf("%s matches remote size, skipping download", filename)
+					_ = e.meta.Update(candidate, description, dateStr)
+					e.events.OnFile(FileEvent{Path: candidate, Filename: filename, Skipped: true, IsVideo: isVideo})
+					return
+				}
 			}
 		}
-		currentIdx++
+		increment++
 	}
 
 	filename := filepath.Base(target)

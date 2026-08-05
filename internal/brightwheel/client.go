@@ -46,6 +46,7 @@ func (s Student) Name() string {
 
 // Media represents one media entry on an activity.
 type Media struct {
+	ObjectID     string `json:"object_id"`
 	ImageURL     string `json:"image_url"`
 	VideoURL     string `json:"video_url"`
 	ThumbnailURL string `json:"thumbnail_url"`
@@ -53,6 +54,7 @@ type Media struct {
 
 // VideoInfo represents the video_info block on an activity.
 type VideoInfo struct {
+	ObjectID        string `json:"object_id"`
 	DownloadableURL string `json:"downloadable_url"`
 	StreamableURL   string `json:"streamable_url"`
 }
