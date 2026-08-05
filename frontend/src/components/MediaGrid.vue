@@ -48,6 +48,7 @@ const visible = computed(() => items.value.slice(0, (page.value + 1) * pageSize)
       <template v-else-if="!store.folder && store.pending.length === 0">
         <span class="text-4xl">🖼️</span>
         <span class="text-sm">Choose a download folder to see existing media.</span>
+        <button class="btn btn-primary btn-sm mt-2" @click="store.pickFolder()">Choose folder</button>
       </template>
       <template v-else>
         <span class="text-4xl">📷</span>
@@ -65,6 +66,20 @@ const visible = computed(() => items.value.slice(0, (page.value + 1) * pageSize)
       </div>
       <div v-if="page < pageCount - 1" class="flex justify-center p-4">
         <button class="btn btn-sm btn-ghost" @click="page++">Load more ({{ items.length - visible.length }} remaining)</button>
+      </div>
+
+      <!-- When no folder is chosen yet, fill the space below a sparse grid
+           with a call-to-action instead of leaving it blank. -->
+      <div
+        v-if="!store.folder"
+        class="flex flex-col items-center justify-center text-center py-16 gap-3 opacity-70"
+      >
+        <span class="text-4xl">📂</span>
+        <span class="text-sm max-w-xs">
+          These are previews of what's available. Choose a download folder to
+          see your existing collection and start downloading.
+        </span>
+        <button class="btn btn-primary btn-sm mt-1" @click="store.pickFolder()">Choose folder</button>
       </div>
     </template>
   </div>
