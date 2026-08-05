@@ -10,6 +10,8 @@
 
 Keepsake is a friendly, cross-platform desktop app (built with Go, Wails v2, and Vue 3) designed to help parents easily download their children's photos and videos from Brightwheel. It takes care of the tedious parts by automatically handling deduplication, normalizing filenames, and even restoring original EXIF metadata and filesystem timestamps.
 
+<p align="center"><a href="SCREENSHOTS.md">📸 See it in action</a></p>
+
 ## Purpose & Legal Notice
 
 *   **Keepsake has no affiliation with Brightwheel.** It is not endorsed, sponsored, or associated with Brightwheel in any way. "Brightwheel" is referenced only to identify the service the app connects to.
