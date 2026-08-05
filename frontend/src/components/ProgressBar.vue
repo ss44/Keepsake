@@ -9,8 +9,16 @@ const pct = computed(() =>
 
 <template>
   <div class="flex items-center gap-3 w-full">
-    <progress class="progress progress-primary flex-1 min-w-0" :value="pct" max="100"></progress>
-    <span class="text-sm whitespace-nowrap shrink-0">{{ store.progress.done }} / {{ store.progress.total }}</span>
-    <span class="text-sm opacity-70 truncate shrink max-w-[40%]">{{ store.status }}</span>
+    <progress
+      class="progress flex-1 min-w-0 transition-all"
+      :class="store.downloading ? 'progress-success' : 'progress-primary'"
+      :value="pct"
+      max="100"
+    ></progress>
+    <span class="text-xs tabular-nums whitespace-nowrap shrink-0 opacity-80">
+      <template v-if="store.progress.total > 0">{{ store.progress.done }} / {{ store.progress.total }} · {{ pct }}%</template>
+      <template v-else>Idle</template>
+    </span>
+    <span class="text-xs opacity-60 truncate shrink max-w-[40%]">{{ store.status }}</span>
   </div>
 </template>
