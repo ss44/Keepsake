@@ -51,10 +51,24 @@ jobs:
         if: runner.os != 'Linux'
         run: wails build -platform ${{ matrix.build.platform }}
 
+      - name: Archive artifacts (Linux)
+        if: runner.os == 'Linux'
+        run: cd build/bin && tar -czvf keepsake-linux-amd64.tar.gz keepsake
+
+      - name: Archive artifacts (macOS)
+        if: runner.os == 'macOS'
+        run: cd build/bin && zip -r keepsake-macos-universal.zip keepsake.app
+
+      - name: Archive artifacts (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path build\bin\keepsake.exe -DestinationPath build\bin\keepsake-windows-amd64.zip
+
       - name: Upload artifacts
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build/bin/*
+          files: |
+            build/bin/*.zip
+            build/bin/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
